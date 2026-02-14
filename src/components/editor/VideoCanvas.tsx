@@ -19,7 +19,9 @@ const VideoCanvas: React.FC<Props> = ({ videoId }) => {
       <div
         ref={containerRef}
         data-video-canvas
-        className="relative w-full max-w-4xl aspect-video bg-card rounded-lg overflow-visible shadow-2xl"
+        className={`relative w-full max-w-4xl aspect-video bg-card rounded-lg overflow-visible shadow-2xl ${
+          !isPlay ? 'select-none' : ''
+        }`}
         onClick={() => {
           if (!isPlay && drawState.phase === 'off') selectOverlay(null);
         }}
@@ -27,10 +29,21 @@ const VideoCanvas: React.FC<Props> = ({ videoId }) => {
         <iframe
           src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&modestbranding=1&rel=0`}
           className="w-full h-full rounded-lg"
+          style={{ pointerEvents: isPlay ? 'auto' : 'none' }}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title="Video"
         />
+        {/* Glass Plate: catches stray clicks in edit mode */}
+        {!isPlay && selectedOverlayId && (
+          <div
+            className="absolute inset-0 z-[1]"
+            onClick={(e) => {
+              e.stopPropagation();
+              selectOverlay(null);
+            }}
+          />
+        )}
         {visibleOverlays.map(overlay => (
           <OverlayElement
             key={overlay.id}
