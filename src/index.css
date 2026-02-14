@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 228 20% 6%;
+    --foreground: 0 0% 93%;
+    --card: 228 18% 9%;
+    --card-foreground: 0 0% 93%;
+    --popover: 228 16% 13%;
+    --popover-foreground: 0 0% 93%;
+    --primary: 195 100% 50%;
+    --primary-foreground: 228 25% 4%;
+    --secondary: 228 16% 13%;
+    --secondary-foreground: 0 0% 80%;
+    --muted: 228 14% 17%;
+    --muted-foreground: 228 10% 45%;
+    --accent: 195 80% 40%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 228 15% 16%;
+    --input: 228 15% 20%;
+    --ring: 195 100% 50%;
+    --radius: 0.5rem;
+    --sidebar-background: 228 18% 9%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 195 100% 50%;
+    --sidebar-primary-foreground: 228 20% 6%;
+    --sidebar-accent: 228 16% 13%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 228 15% 16%;
+    --sidebar-ring: 195 100% 50%;
+
+    --surface: 228 18% 9%;
+    --surface-alt: 228 16% 13%;
+    --surface-raised: 228 14% 17%;
+    --glow: 195 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: hsl(228 18% 9%); }
+::-webkit-scrollbar-thumb { background: hsl(228 15% 22%); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(228 15% 30%); }
+
+/* Glow utilities */
+.glow-border {
+  box-shadow: 0 0 0 1px hsl(195 100% 50% / 0.3), 0 0 20px hsl(195 100% 50% / 0.1);
+}
+.glow-text {
+  text-shadow: 0 0 30px hsl(195 100% 50% / 0.5);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsl(195 100% 50% / 0.15); }
+  50% { box-shadow: 0 0 40px hsl(195 100% 50% / 0.3); }
+}
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.3s ease-out; }
