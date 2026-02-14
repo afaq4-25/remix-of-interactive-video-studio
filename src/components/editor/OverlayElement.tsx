@@ -66,10 +66,10 @@ const OverlayElement: React.FC<Props> = ({ overlay, isSelected, editorMode, onSe
         height: `${transform.height}%`,
         transform: `rotate(${transform.rotation}deg)`,
         transformOrigin: 'center center',
-        zIndex: overlay.zIndex,
+        zIndex: Math.max(2, overlay.zIndex),
         cursor: isPlay ? 'default' : (drag?.type === 'move' ? 'grabbing' : 'grab'),
-        pointerEvents: isPlay ? 'auto' : 'auto',
       }}
+      onClick={(e) => { if (!isPlay) e.stopPropagation(); }}
       onMouseDown={(e) => {
         if (isPlay) return;
         e.stopPropagation();
