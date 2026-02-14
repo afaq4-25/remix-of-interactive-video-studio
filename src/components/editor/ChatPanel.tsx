@@ -12,6 +12,7 @@ const ChatPanel: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamPreview, setStreamPreview] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const selectedOverlay = overlays.find(o => o.id === selectedOverlayId);
   const isPrompting = drawState.phase === 'prompting';
@@ -19,6 +20,17 @@ const ChatPanel: React.FC = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, streamPreview]);
+
+  // Get pixel dimensions of the video container for context-aware generation
+  const getPixelDimensions = (box: { x: number; y: number; width: number; height: number }) => {
+    const videoCanvas = document.querySelector('[data-video-canvas]') as HTMLDivElement | null;
+    if (!videoCanvas) return { widthPx: 0, heightPx: 0 };
+    const rect = videoCanvas.getBoundingClientRect();
+    return {
+      widthPx: Math.round((box.width / 100) * rect.width),
+      heightPx: Math.round((box.height / 100) * rect.height),
+    };
+  };
 
   const handleSend = async () => {
     const text = input.trim();
@@ -39,12 +51,19 @@ const ChatPanel: React.FC = () => {
     });
 
     const aspectRatio = drawnBox ? (drawnBox.width / drawnBox.height).toFixed(2) : undefined;
+    const pixelDims = drawnBox ? getPixelDimensions(drawnBox) : { widthPx: 0, heightPx: 0 };
 
     await streamOverlayGeneration({
       prompt: text,
       existingCode: isEditing ? selectedOverlay.code : undefined,
       mode: isEditing ? 'edit' : 'create',
-      dimensions: drawnBox ? { width: drawnBox.width, height: drawnBox.height, aspectRatio: aspectRatio! } : undefined,
+      dimensions: drawnBox ? {
+        width: drawnBox.width,
+        height: drawnBox.height,
+        aspectRatio: aspectRatio!,
+        widthPx: pixelDims.widthPx,
+        heightPx: pixelDims.heightPx,
+      } : undefined,
       onDelta: (chunk) => setStreamPreview(prev => prev + chunk),
       onDone: (html) => {
         setStreamPreview('');
@@ -74,7 +93,7 @@ const ChatPanel: React.FC = () => {
           addChatMessage({
             id: crypto.randomUUID(),
             role: 'assistant',
-            content: `✅ Created **${label}**. Use gizmos to transform. Select it and prompt again to edit.`,
+            content: `✅ Created **${label}**. Switch to **Play** mode to interact with it.`,
           });
         }
         setDrawState({ phase: 'off' });
@@ -164,7 +183,7 @@ const ChatPanel: React.FC = () => {
         </div>
         {(isPrompting || (!selectedOverlay && !isPrompting)) && (
           <div className="mt-2 flex flex-wrap gap-1">
-            {['3D cube game', 'Animated calculator', 'SVG particle effect', 'Quiz widget', 'Countdown timer'].map(s => (
+            {['3D cube game', 'Animated calculator', 'Physics simulation', 'Quiz widget', 'Countdown timer'].map(s => (
               <button
                 key={s}
                 onClick={() => setInput(s)}

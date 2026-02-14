@@ -12,7 +12,7 @@ export async function streamOverlayGeneration({
   prompt: string;
   existingCode?: string;
   mode?: 'create' | 'edit';
-  dimensions?: { width: number; height: number; aspectRatio: string };
+  dimensions?: { width: number; height: number; aspectRatio: string; widthPx: number; heightPx: number };
   onDelta: (chunk: string) => void;
   onDone: (fullText: string) => void;
   onError: (error: string) => void;
