@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEditor } from './EditorContext';
 import { useNavigate } from 'react-router-dom';
-import { Copy, Trash2, RotateCcw, Save, ArrowLeft, Library, Plus, Eye, Pencil, ArrowUpToLine, ArrowDownToLine } from 'lucide-react';
+import { Copy, Trash2, RotateCcw, Save, ArrowLeft, Library, Plus, Eye, Pencil, ArrowUpToLine, ArrowDownToLine, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -85,6 +85,7 @@ const Toolbar: React.FC<Props> = ({ videoId }) => {
           if (isDrawActive) {
             setDrawState({ phase: 'off' });
           } else {
+            setEditorMode('edit');
             setDrawState({ phase: 'ready' });
           }
         }}
@@ -98,11 +99,11 @@ const Toolbar: React.FC<Props> = ({ videoId }) => {
         {isDrawActive ? 'Cancel Draw' : '+ New Overlay'}
       </button>
 
-      {/* Mode toggle */}
+      {/* Mode toggle — Edit / Play */}
       <div className="flex items-center bg-secondary rounded-md p-0.5">
         <button
           onClick={() => setEditorMode('edit')}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+          className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
             editorMode === 'edit' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
@@ -110,13 +111,16 @@ const Toolbar: React.FC<Props> = ({ videoId }) => {
           Edit
         </button>
         <button
-          onClick={() => setEditorMode('preview')}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-            editorMode === 'preview' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+          onClick={() => {
+            setEditorMode('preview');
+            setDrawState({ phase: 'off' });
+          }}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+            editorMode === 'preview' ? 'bg-emerald-500 text-white' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Eye className="w-3 h-3" />
-          Preview
+          <Play className="w-3 h-3" />
+          Play
         </button>
       </div>
 

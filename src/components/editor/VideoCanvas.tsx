@@ -12,14 +12,16 @@ const VideoCanvas: React.FC<Props> = ({ videoId }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const visibleOverlays = overlays.filter(o => currentTime >= o.timeline.start && currentTime <= o.timeline.end);
+  const isPlay = editorMode === 'preview';
 
   return (
     <div className="flex-1 flex items-center justify-center p-4 bg-background overflow-hidden">
       <div
         ref={containerRef}
+        data-video-canvas
         className="relative w-full max-w-4xl aspect-video bg-card rounded-lg overflow-visible shadow-2xl"
         onClick={() => {
-          if (editorMode === 'edit' && drawState.phase === 'off') selectOverlay(null);
+          if (!isPlay && drawState.phase === 'off') selectOverlay(null);
         }}
       >
         <iframe

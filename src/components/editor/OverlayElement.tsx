@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Overlay, EditorMode } from './EditorContext';
 
 interface Props {
@@ -12,7 +12,17 @@ interface Props {
 
 const OverlayElement: React.FC<Props> = ({ overlay, isSelected, editorMode, onSelect, onUpdate, containerRef }) => {
   const [drag, setDrag] = useState<{ type: 'move' | 'resize' | 'rotate'; sx: number; sy: number; init: any } | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const { transform } = overlay;
+
+  const isPlay = editorMode === 'preview';
+
+  // In play mode, focus iframe for keyboard capture
+  useEffect(() => {
+    if (isPlay && isSelected && iframeRef.current) {
+      iframeRef.current.focus();
+    }
+  }, [isPlay, isSelected]);
 
   useEffect(() => {
     if (!drag) return;
@@ -44,11 +54,11 @@ const OverlayElement: React.FC<Props> = ({ overlay, isSelected, editorMode, onSe
     return () => { window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleUp); };
   }, [drag, overlay.id, transform, containerRef, onUpdate]);
 
-  const isPreview = editorMode === 'preview';
-
   return (
     <div
-      className={`absolute group transition-shadow duration-150 ${isSelected && !isPreview ? 'ring-2 ring-primary/80 ring-offset-1 ring-offset-background rounded-md' : ''}`}
+      className={`absolute group transition-shadow duration-150 ${
+        isSelected && !isPlay ? 'ring-2 ring-primary ring-offset-0 rounded-md' : ''
+      }`}
       style={{
         left: `${transform.x}%`,
         top: `${transform.y}%`,
@@ -57,23 +67,27 @@ const OverlayElement: React.FC<Props> = ({ overlay, isSelected, editorMode, onSe
         transform: `rotate(${transform.rotation}deg)`,
         transformOrigin: 'center center',
         zIndex: overlay.zIndex,
-        cursor: isPreview ? 'default' : (drag?.type === 'move' ? 'grabbing' : 'grab'),
+        cursor: isPlay ? 'default' : (drag?.type === 'move' ? 'grabbing' : 'grab'),
+        pointerEvents: isPlay ? 'auto' : 'auto',
       }}
       onMouseDown={(e) => {
-        if (isPreview) return;
+        if (isPlay) return;
         e.stopPropagation();
         onSelect(overlay.id);
         setDrag({ type: 'move', sx: e.clientX, sy: e.clientY, init: { x: transform.x, y: transform.y } });
       }}
     >
       <iframe
+        ref={iframeRef}
         srcDoc={overlay.code}
         className="w-full h-full border-none rounded-sm"
         sandbox="allow-scripts allow-same-origin"
         title={overlay.label}
-        style={{ pointerEvents: isPreview ? 'auto' : 'none' }}
+        style={{ pointerEvents: isPlay ? 'auto' : 'none' }}
+        tabIndex={isPlay ? 0 : -1}
       />
-      {isSelected && !isPreview && (
+      {/* Edit mode handles — hidden in play mode */}
+      {isSelected && !isPlay && (
         <>
           {/* Corner handles */}
           {[
@@ -109,7 +123,7 @@ const OverlayElement: React.FC<Props> = ({ overlay, isSelected, editorMode, onSe
         </>
       )}
       {/* Hover outline in edit mode when not selected */}
-      {!isSelected && !isPreview && (
+      {!isSelected && !isPlay && (
         <div className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity ring-1 ring-primary/30 pointer-events-none" />
       )}
     </div>
