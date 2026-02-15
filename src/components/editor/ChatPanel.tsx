@@ -5,23 +5,25 @@ import { streamOverlayGeneration } from '@/lib/ai-stream';
 
 const ChatPanel: React.FC = () => {
   const {
-    chatMessages, addChatMessage, addOverlay, updateOverlay, currentTime,
+    addChatMessage, getChatMessages, addOverlay, updateOverlay, currentTime,
     selectedOverlayId, overlays, drawState, setDrawState
   } = useEditor();
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamPreview, setStreamPreview] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const selectedOverlay = overlays.find(o => o.id === selectedOverlayId);
   const isPrompting = drawState.phase === 'prompting';
+
+  // Determine the chat context: overlay-specific or global
+  const chatContextId = isPrompting ? '__new__' : (selectedOverlayId || 'global');
+  const chatMessages = getChatMessages(chatContextId);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, streamPreview]);
 
-  // Get pixel dimensions of the video container for context-aware generation
   const getPixelDimensions = (box: { x: number; y: number; width: number; height: number }) => {
     const videoCanvas = document.querySelector('[data-video-canvas]') as HTMLDivElement | null;
     if (!videoCanvas) return { widthPx: 0, heightPx: 0 };
@@ -40,11 +42,11 @@ const ChatPanel: React.FC = () => {
     const isEditing = !!selectedOverlay && !isPrompting;
     const drawnBox = isPrompting && drawState.box ? drawState.box : null;
 
-    addChatMessage({ id: crypto.randomUUID(), role: 'user', content: text });
+    addChatMessage(chatContextId, { id: crypto.randomUUID(), role: 'user', content: text });
     setIsGenerating(true);
     setStreamPreview('');
 
-    addChatMessage({
+    addChatMessage(chatContextId, {
       id: crypto.randomUUID(),
       role: 'assistant',
       content: `${isEditing ? '✏️ Editing' : '🔨 Generating'} overlay...`,
@@ -52,6 +54,9 @@ const ChatPanel: React.FC = () => {
 
     const aspectRatio = drawnBox ? (drawnBox.width / drawnBox.height).toFixed(2) : undefined;
     const pixelDims = drawnBox ? getPixelDimensions(drawnBox) : { widthPx: 0, heightPx: 0 };
+
+    // Build conversation history for context (only for editing existing overlays)
+    const history = isEditing ? getChatMessages(selectedOverlayId!).filter(m => m.role === 'user').map(m => m.content) : [];
 
     await streamOverlayGeneration({
       prompt: text,
@@ -69,7 +74,7 @@ const ChatPanel: React.FC = () => {
         setStreamPreview('');
         if (isEditing) {
           updateOverlay(selectedOverlay.id, { code: html });
-          addChatMessage({
+          addChatMessage(selectedOverlayId!, {
             id: crypto.randomUUID(),
             role: 'assistant',
             content: `✅ Updated **${selectedOverlay.label}**.`,
@@ -90,18 +95,14 @@ const ChatPanel: React.FC = () => {
             label,
           };
           addOverlay(overlay);
-          addChatMessage({
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: `✅ Created **${label}**. Switch to **Play** mode to interact with it.`,
-          });
+          // The addOverlay callback initializes the overlay's chat history
         }
         setDrawState({ phase: 'off' });
         setIsGenerating(false);
       },
       onError: (error) => {
         setStreamPreview('');
-        addChatMessage({ id: crypto.randomUUID(), role: 'assistant', content: `❌ Error: ${error}` });
+        addChatMessage(chatContextId, { id: crypto.randomUUID(), role: 'assistant', content: `❌ Error: ${error}` });
         setIsGenerating(false);
       },
     });
@@ -117,7 +118,7 @@ const ChatPanel: React.FC = () => {
         {selectedOverlay && !isPrompting && (
           <span className="ml-auto flex items-center gap-1 text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-full">
             <Pencil className="w-3 h-3" />
-            Editing: {selectedOverlay.label}
+            {selectedOverlay.label}
           </span>
         )}
         {isPrompting && (
@@ -127,6 +128,11 @@ const ChatPanel: React.FC = () => {
         )}
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {chatMessages.length === 0 && !isPrompting && !selectedOverlay && (
+          <div className="text-xs text-muted-foreground text-center py-8">
+            Select an overlay to see its chat history, or draw a new region.
+          </div>
+        )}
         {chatMessages.map(msg => (
           <div key={msg.id} className={`animate-fade-in ${msg.role === 'user' ? 'ml-6' : 'mr-2'}`}>
             <div className={`text-xs mb-1 ${msg.role === 'user' ? 'text-right text-muted-foreground' : 'text-primary font-medium'}`}>

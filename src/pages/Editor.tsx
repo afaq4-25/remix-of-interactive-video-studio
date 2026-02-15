@@ -5,6 +5,7 @@ import ChatPanel from '@/components/editor/ChatPanel';
 import VideoCanvas from '@/components/editor/VideoCanvas';
 import Timeline from '@/components/editor/Timeline';
 import Toolbar from '@/components/editor/Toolbar';
+import PropertiesPanel from '@/components/editor/PropertiesPanel';
 
 const Editor: React.FC = () => {
   const { videoId } = useParams<{ videoId: string }>();
@@ -18,6 +19,7 @@ const Editor: React.FC = () => {
         <div className="flex flex-1 min-h-0">
           <ChatPanel />
           <VideoCanvas videoId={videoId} />
+          <PropertiesPanel />
         </div>
         <Timeline />
       </div>
